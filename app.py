@@ -28,7 +28,7 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-    reply_text = f"你說的是: {event.message.text}"
+    reply_text = f"大哥說的是: {event.message.text}"
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
 
 if __name__ == "__main__":
