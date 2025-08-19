@@ -1,5 +1,2 @@
-# LINE Bot Deployment to Heroku
+# LINE Bot Deployment to Render
 
-One click deployment. Just click it.
-
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/CodeShibaGo/flask-line-bot-heroku)
