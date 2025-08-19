@@ -3,7 +3,8 @@ from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
-
+from dotenv import load_dotenv
+load_dotenv()
 app = Flask(__name__)
 
 # 從環境變數讀取 Channel Access Token 和 Channel Secret
