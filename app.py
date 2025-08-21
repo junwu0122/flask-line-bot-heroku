@@ -28,27 +28,23 @@ def callback():
     return "OK"
 
 @handler.add(MessageEvent, message=TextMessage)
-@handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-    print(f"使用者輸入：{event.message.text}")
-    
+    print("[LOG] 測試按鈕")
     buttons_template = ButtonsTemplate(
         title="測試選單",
-        text="請選擇一檔股票",
+        text="請先點按鈕試試",
         actions=[
-            PostbackAction(label="台積電 (2330)", data="add_stock:2330"),
-            PostbackAction(label="聯電 (2303)", data="add_stock:2303"),
-            PostbackAction(label="鴻海 (2317)", data="add_stock:2317")
+            PostbackAction(label="A", data="testA"),
+            PostbackAction(label="B", data="testB"),
         ]
     )
-
     template_message = TemplateSendMessage(
-        alt_text="新增股票選單",
+        alt_text="測試選單",  # 記得必填
         template=buttons_template
     )
-
     line_bot_api.reply_message(event.reply_token, template_message)
 
+@handler.add(MessageEvent, message=TextMessage)
 def handle_postback(event):
     data = event.postback.data
     if data.startswith("add_stock:"):
