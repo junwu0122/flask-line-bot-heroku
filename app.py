@@ -1,13 +1,16 @@
-import os
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import MessageEvent, TextMessage, TextSendMessage
+from linebot.models import (
+    TextSendMessage, PostbackEvent, MessageEvent, TextMessage, TemplateSendMessage, ButtonsTemplate, PostbackAction
+)
+import os
 from dotenv import load_dotenv
+from stock_mongo import add_stock
+
 load_dotenv()
 app = Flask(__name__)
 
-# 從環境變數讀取 Channel Access Token 和 Channel Secret
 channel_access_token = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 channel_secret = os.getenv("LINE_CHANNEL_SECRET")
 
@@ -28,10 +31,40 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-    user_id = event.source.user_id
-    print("user_id:" + user_id)
-    reply_text = f"大哥說的是: {event.message.text}"
-    line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
+    text = event.message.text.strip()
+    if text == "新增股票":
+        buttons_template = ButtonsTemplate(
+            title="新增股票",
+            text="請選擇股票代碼",
+            actions=[
+                PostbackAction(label="2330", data="action=add_stock&stock=2330"),
+                PostbackAction(label="2317", data="action=add_stock&stock=2317"),
+                PostbackAction(label="2454", data="action=add_stock&stock=2454"),
+            ]
+        )
+        template_message = TemplateSendMessage(
+            alt_text="新增股票選單",
+            template=buttons_template
+        )
+        line_bot_api.reply_message(event.reply_token, template_message)
+    else:
+        reply_text = f"大哥說的是: {text}"
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
+
+@handler.add(PostbackEvent)
+def handle_postback(event):
+    data = event.postback.data
+    if data.startswith("action=add_stock"):
+        params = dict(param.split('=') for param in data.split('&'))
+        stock_id = params.get('stock')
+
+        price = 1000
+        operator = 'less_than'
+
+        add_stock(stock_id, price, operator)
+
+        reply_text = f"已新增股票 {stock_id}，目標價格 {price}"
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
 
 if __name__ == "__main__":
-    app.run()
+    app.run(port=8000)
