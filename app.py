@@ -60,6 +60,11 @@ def handle_postback(event):
             event.reply_token,
             TextSendMessage(text=f"✅ 已新增股票 {stock_id} 至監控清單")
         )
+@handler.add(MessageEvent, message=TextMessage)
+def handle_message(event):
+    print(f"使用者輸入：{event.message.text}")
+    if event.message.text == "新增股票":
+        print("✅ 進入新增股票分支")
 
 if __name__ == "__main__":
     app.run()
