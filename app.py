@@ -27,22 +27,6 @@ def callback():
         abort(400)
     return "OK"
 
-@handler.add(MessageEvent, message=TextMessage)
-def handle_message(event):
-    print("[LOG] 測試按鈕")
-    buttons_template = ButtonsTemplate(
-        title="測試選單",
-        text="請先點按鈕試試",
-        actions=[
-            PostbackAction(label="A", data="testA"),
-            PostbackAction(label="B", data="testB"),
-        ]
-    )
-    template_message = TemplateSendMessage(
-        alt_text="測試選單",  # 記得必填
-        template=buttons_template
-    )
-    line_bot_api.reply_message(event.reply_token, template_message)
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_postback(event):
@@ -58,7 +42,26 @@ def handle_postback(event):
 def handle_message(event):
     print(f"使用者輸入：{event.message.text}")
     if event.message.text == "新增股票":
-        print("✅ 進入新增股票分支")
+    print("✅ 進入新增股票分支")
+    buttons_template = ButtonsTemplate(
+        title="請選擇要新增的股票",
+        text="點選下方按鈕新增：",
+        actions=[
+            PostbackAction(label="台積電 (2330)", data="add_stock:2330"),
+            PostbackAction(label="聯電 (2303)", data="add_stock:2303"),
+            PostbackAction(label="鴻海 (2317)", data="add_stock:2317")
+        ]
+    )
+    template_message = TemplateSendMessage(
+        alt_text="新增股票選單",
+        template=buttons_template
+    )
+    print("準備回覆按鈕選單訊息")
+    try:
+        line_bot_api.reply_message(event.reply_token, template_message)
+        print("已呼叫 reply_message")
+    except Exception as e:
+        print(f"發生錯誤: {e}")
 
 if __name__ == "__main__":
     app.run()
