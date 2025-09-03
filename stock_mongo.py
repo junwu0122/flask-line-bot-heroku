@@ -5,7 +5,12 @@ import datetime
 
 load_dotenv()
 
-MONGO_URL = os.getenv("MONGODB_URL")
+# 自動偵測環境
+MONGO_URL = os.getenv("MONGODB_URL")  # Render 上設定的環境變數
+if not MONGO_URL:
+    # 本地開發 fallback
+    MONGO_URL = "mongodb://localhost:27017"
+
 database_name = 'Jun'
 COLLECTION_NAME = 'stock'
 
