@@ -6,6 +6,6 @@ services:
     startCommand: gunicorn app:app
     envVars:
       - key: LINE_CHANNEL_SECRET
-        value: 3778182db0f406c2b9131afa83f5cad3
+        sync: false
       - key: LINE_CHANNEL_ACCESS_TOKEN
-        value: /5PRhzejm91x7dLVbapCX1Jx5rsdTeSPmBG6yIKdejweiT5hZmXLOixMY6u1uFnV2ZU41aKcSIWMkEtIlzEwHaJ1Os+XmtQIBCu0bt/MouWypoK3xGGWRwB8AH67rEDHufuy+Rqxk8Yl/oJdUIz0iwdB04t89/1O/w1cDnyilFU=
+        sync: false
