@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 from pymongo import MongoClient
 import datetime
+
 load_dotenv()
 
 MONGO_URL = os.getenv("MONGODB_URL")
@@ -12,64 +13,81 @@ def init_mongo_db():
     client = MongoClient(MONGO_URL)
     db = client[database_name]
     return db
-# 查詢某股票的最低價格（如果存在）
+
+# 取得所有監控的股票
 def get_stock():
     db = init_mongo_db()
-    cursor = db.stock.find()
+    cursor = db[COLLECTION_NAME].find(
+        {},  # 條件為空，取全部
+        {"_id": 0, "stock_name": 1, "price": 1, "operator": 1, "notified": 1, "datetime": 1}
+    )
     return list(cursor)
-def get_min_price(name):
-    db = init_mongo_db()
-    stocks_collection = db.prices
 
+# 查詢某股票的監控設定
+def get_stock_info(name):
+    db = init_mongo_db()
+    stocks_collection = db[COLLECTION_NAME]
     result = stocks_collection.find_one({"stock_name": name})
-    print("找尋股票")
-    if result and "price" in result:
-        return result["price"]
+    return result
+
+# 查詢某股票的監控價格
+def get_target_price(name):
+    stock = get_stock_info(name)
+    if stock and "price" in stock:
+        return stock["price"]
     else:
         return None
-def add_stock(name, price,opertor="less_than"):
-    db = init_mongo_db()
-    prices = db.stock
 
-    # 查找現有股票價格
-    existing = prices.find_one({"stock_name": name})
+# 查詢某股票的監控條件 (less_than / greater_than)
+def get_operator(name):
+    stock = get_stock_info(name)
+    if stock and "operator" in stock:
+        return stock["operator"]
+    else:
+        return "less_than"  # 預設
+
+# 新增或更新股票監控價
+def add_stock(name, price, operator="less_than"):
+    if operator not in ["less_than", "greater_than"]:
+        raise ValueError("❌ operator 只能是 'less_than' 或 'greater_than'")
+
+    db = init_mongo_db()
+    stocks = db[COLLECTION_NAME]
+
+    existing = stocks.find_one({"stock_name": name})
 
     if existing is None:
         # 沒有資料，直接插入
         price_dic = {
             "stock_name": name,
             "price": price,
-            "operator": opertor,
+            "operator": operator,
+            "notified": False,  # ✅ 初始化通知狀態
             "datetime": datetime.datetime.now(datetime.timezone.utc)
         }
-        prices.insert_one(price_dic)
-        print("資料不存在，已插入新資料並更新價格。")
+        stocks.insert_one(price_dic)
+        print(f"✅ 已新增股票監控：{name}, {operator} {price}")
     else:
-        existing_price = existing.get("price")
-        if existing_price is None or price < existing_price:
-            # 新價格更便宜，更新資料
-            new_values = {
-                "$set": {
-                    "price": price,
-                    "datetime": datetime.datetime.now(datetime.timezone.utc)
-                }
+        # 覆蓋更新並重置通知狀態
+        new_values = {
+            "$set": {
+                "price": price,
+                "operator": operator,
+                "notified": False,  # ✅ 更新監控時重置
+                "datetime": datetime.datetime.now(datetime.timezone.utc)
             }
-            prices.update_one({"stock_name": name}, new_values)
-            print("價格已更新為更低價格。")
-        else:
-            print("新價格沒有比現有價格低，未更新。")
-def init_price(name,price):
-    db = init_mongo_db()
-    price_dic={
-        "stock_name":name,
-        "price": price,
-        "datetime": datetime.datetime.now(datetime.timezone.utc)
-    }
-    prices = db.prices
-    price_id = prices.insert_one(price_dic).inserted_id
-    prices
-    print("init success")
+        }
+        stocks.update_one({"stock_name": name}, new_values)
+        print(f"🔄 已更新股票監控：{name}, {operator} {price}")
 
-# add_stock("2330", 705)
-# stocks = get_stock()
-# print(stocks)
+def get_stock_by_name(name):
+    db = init_mongo_db()
+    return db[COLLECTION_NAME].find_one({"stock_name": name})
+
+
+def update_notified_status(name, status: bool):
+    db = init_mongo_db()
+    db[COLLECTION_NAME].update_one(
+        {"stock_name": name},
+        {"$set": {"notified": status}}
+    )
